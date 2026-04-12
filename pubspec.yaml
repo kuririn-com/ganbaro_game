@@ -1,5 +1,5 @@
 name: ganbaro_game
-description: "A professional physics game project."
+description: "Block Pop - A professional physics puzzle game."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # 確実に解決できるバージョンに修正しました
   flame: ^1.11.0
   flame_forge2d: ^0.18.1
   cupertino_icons: ^1.0.8
@@ -21,16 +20,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  flutter_launcher_icons: ^0.13.1  # ←これを追加
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
-  # ここから下を追記
   assets:
     - assets/audio/
 
-flutter_icons:
+# アイコン生成設定（flutter_icons から flutter_launcher_icons に修正済み）
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
-  remove_alpha_ios: true # iOS用に透過(アルファチャンネル)を自動削除する設定
+  remove_alpha_ios: true # iOS用背景透過エラー防止：有効

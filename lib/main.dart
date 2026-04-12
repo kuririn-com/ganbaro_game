@@ -23,7 +23,7 @@ class BlockPuzzleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Block Blast Puzzle',
+      title: 'Block Pop', // ← 更新
       theme: ThemeData.dark(),
       home: const TitleScreen(),
     );
@@ -115,7 +115,7 @@ class _TitleScreenState extends State<TitleScreen> {
           children: [
             const Icon(Icons.grid_view, size: 80, color: Colors.orange),
             const SizedBox(height: 10),
-            const Text('ブロックブラスト', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+            const Text('Block Pop', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)), // ← 更新
             const SizedBox(height: 20),
             
             // ベストスコア表示
@@ -508,7 +508,7 @@ class _GameBoardState extends State<GameBoard> {
                     Text('SCORE: $score', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ]),
                   
-                  // ゲーム中のボム使用ボタン（動画を見る機能は削除され、純粋に使うだけになりました）
+                  // ゲーム中のボム使用ボタン
                   ElevatedButton.icon(
                     onPressed: bombCount > 0 && !isGameOver && !isExploding ? useBombItem : null,
                     icon: const Icon(Icons.bolt, color: Colors.yellow),
