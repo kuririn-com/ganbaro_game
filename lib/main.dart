@@ -5,11 +5,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/foundation.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   if (!kIsWeb) {
+    // 広告初期化の前に、トラッキング許可のポップアップを表示する
+    await AppTrackingTransparency.requestTrackingAuthorization();
     await MobileAds.instance.initialize();
   }
   
@@ -23,7 +26,7 @@ class BlockPuzzleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Block Pop', // ← 更新
+      title: 'Block Pop',
       theme: ThemeData.dark(),
       home: const TitleScreen(),
     );
@@ -115,7 +118,7 @@ class _TitleScreenState extends State<TitleScreen> {
           children: [
             const Icon(Icons.grid_view, size: 80, color: Colors.orange),
             const SizedBox(height: 10),
-            const Text('Block Pop', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)), // ← 更新
+            const Text('Block Pop', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             
             // ベストスコア表示
@@ -202,7 +205,7 @@ class BlockData {
 
 class GameBoard extends StatefulWidget {
   final GameMode mode;
-  final int initialBombs; // トップ画面から受け取るボム数
+  final int initialBombs; 
 
   const GameBoard({super.key, required this.mode, this.initialBombs = 0});
 
@@ -231,7 +234,7 @@ class _GameBoardState extends State<GameBoard> {
   Timer? gameTimer;
   bool isGameOver = false, isExploding = false;
   int score = 0, level = 1, bombCount = 0, lastStarScore = 0, bestScore = 0;
-  bool _isFirstGame = true; // 初回プレイ時のみ初期ボムを付与するためのフラグ
+  bool _isFirstGame = true; 
 
   final AudioPlayer _fallPlayer = AudioPlayer(); 
   final AudioPlayer _placePlayer = AudioPlayer();
@@ -239,7 +242,7 @@ class _GameBoardState extends State<GameBoard> {
 
   String get _bestScoreKey => widget.mode == GameMode.level ? 'best_score_level' : 'best_score_normal';
 
-  // インタースティシャル広告のみ
+  // インタースティシャル広告
   InterstitialAd? _interstitialAd;
   final String interstitialAdUnitId = 'ca-app-pub-9003840415284448/6721545961';
 
@@ -503,7 +506,10 @@ class _GameBoardState extends State<GameBoard> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  
+                  // ▼▼ レベル表示をここに追加しました ▼▼
                   Column(children: [
+                    Text(widget.mode == GameMode.level ? 'LEVEL: $level / 50' : 'NORMAL MODE', style: const TextStyle(color: Colors.orangeAccent, fontSize: 14, fontWeight: FontWeight.bold)),
                     Text('BEST: $bestScore', style: const TextStyle(color: Colors.yellow, fontSize: 12)),
                     Text('SCORE: $score', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   ]),

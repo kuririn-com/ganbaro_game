@@ -15,6 +15,7 @@ dependencies:
   audioplayers: ^6.6.0
   shared_preferences: ^2.5.5
   google_mobile_ads: ^7.0.0
+  app_tracking_transparency: ^2.0.6+1
 
 dev_dependencies:
   flutter_test:
