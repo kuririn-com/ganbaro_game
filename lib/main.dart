@@ -7,15 +7,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/foundation.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  if (!kIsWeb) {
-    // 広告初期化の前に、トラッキング許可のポップアップを表示する
-    await AppTrackingTransparency.requestTrackingAuthorization();
-    await MobileAds.instance.initialize();
-  }
-  
+  // アプリ起動時の初期化は最小限にし、ATTと広告の準備はトップ画面で行います
   runApp(const BlockPuzzleApp());
 }
 
@@ -48,7 +42,7 @@ class TitleScreen extends StatefulWidget {
 class _TitleScreenState extends State<TitleScreen> {
   int _bestLevel = 0;
   int _bestNormal = 0;
-  int _initialBombs = 0; // トップ画面で獲得した初期ボム数
+  int _initialBombs = 0; 
 
   RewardedAd? _rewardedAd;
   final String rewardedAdUnitId = 'ca-app-pub-9003840415284448/5493879760';
@@ -57,7 +51,21 @@ class _TitleScreenState extends State<TitleScreen> {
   void initState() {
     super.initState();
     _loadAllBestScores();
-    _loadRewardedAd(); // トップ画面でリワード広告を準備
+    _initATTAndAds(); // 画面が開いた時にATTと広告を準備する
+  }
+
+  // ATTポップアップとAdMobの初期化処理
+  Future<void> _initATTAndAds() async {
+    if (!kIsWeb) {
+      // 画面が完全に表示されるまで少し（0.5秒）待つ
+      await Future.delayed(const Duration(milliseconds: 500));
+      // トラッキング許可のポップアップを表示
+      await AppTrackingTransparency.requestTrackingAuthorization();
+      // その後に広告システムを起動
+      await MobileAds.instance.initialize();
+      // 動画広告を読み込む
+      _loadRewardedAd();
+    }
   }
 
   void _loadRewardedAd() {
@@ -507,7 +515,7 @@ class _GameBoardState extends State<GameBoard> {
                 children: [
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                   
-                  // ▼▼ レベル表示をここに追加しました ▼▼
+                  // レベル表示
                   Column(children: [
                     Text(widget.mode == GameMode.level ? 'LEVEL: $level / 50' : 'NORMAL MODE', style: const TextStyle(color: Colors.orangeAccent, fontSize: 14, fontWeight: FontWeight.bold)),
                     Text('BEST: $bestScore', style: const TextStyle(color: Colors.yellow, fontSize: 12)),
