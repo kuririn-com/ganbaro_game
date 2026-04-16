@@ -74,8 +74,17 @@ class _TitleScreenState extends State<TitleScreen> {
       adUnitId: rewardedAdUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) => _rewardedAd = ad,
-        onAdFailedToLoad: (error) => _rewardedAd = null,
+        onAdLoaded: (ad) {
+          // ★修正箇所：画面を更新してボタンを緑にする
+          setState(() {
+            _rewardedAd = ad;
+          });
+        },
+        onAdFailedToLoad: (error) {
+          setState(() {
+            _rewardedAd = null;
+          });
+        },
       ),
     );
   }
@@ -268,8 +277,17 @@ class _GameBoardState extends State<GameBoard> {
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitialAd = ad,
-        onAdFailedToLoad: (error) => _interstitialAd = null,
+        onAdLoaded: (ad) {
+          // ★修正箇所：ここにもsetStateを追加
+          setState(() {
+            _interstitialAd = ad;
+          });
+        },
+        onAdFailedToLoad: (error) {
+          setState(() {
+            _interstitialAd = null;
+          });
+        },
       ),
     );
   }
