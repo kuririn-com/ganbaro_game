@@ -1,16 +1,14 @@
-# ganbaro_game
+# Block Pop 更新版
 
-A new Flutter project.
+ご指定の8機能を追加したFlutterプロジェクトです。
+導入・操作・iOS更新の手順は **UPDATE_GUIDE.md** をご覧ください。
+検証結果は **VERIFICATION.md** に記載しています。
 
-## Getting Started
+```powershell
+flutter pub get
+flutter analyze
+flutter test
+flutter run -d chrome
+```
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Flutter 3.38.4 / Dart 3.10.3 以上を使用してください。
