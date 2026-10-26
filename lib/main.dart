@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'ads.dart';
+import 'banner_ad.dart';
 import 'app_data.dart';
 import 'game_engine.dart';
 
@@ -20,6 +21,7 @@ const blockColors = <Color>[
 const accent = Color(0xffffb454);
 const background = Color(0xff10141e);
 const panel = Color(0xff1d2433);
+final appRouteObserver = RouteObserver<PageRoute<dynamic>>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,7 @@ class BlockPuzzleApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Block Pop',
+    navigatorObservers: [appRouteObserver],
     theme: ThemeData.dark(useMaterial3: true).copyWith(
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
@@ -70,10 +73,24 @@ class TitleScreen extends StatefulWidget {
   State<TitleScreen> createState() => _TitleScreenState();
 }
 
-class _TitleScreenState extends State<TitleScreen> {
+class _TitleScreenState extends State<TitleScreen> with RouteAware {
   final Ads ads = Ads();
   int bombs = 0;
   bool _adInitStarted = false;
+  bool _routeVisible = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPushNext() => setState(() => _routeVisible = false);
+
+  @override
+  void didPopNext() => setState(() => _routeVisible = true);
   @override
   void initState() {
     super.initState();
@@ -87,6 +104,7 @@ class _TitleScreenState extends State<TitleScreen> {
 
   @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     ads.dispose();
     super.dispose();
   }
@@ -112,6 +130,12 @@ class _TitleScreenState extends State<TitleScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+    bottomNavigationBar: AnimatedBuilder(
+      animation: ads,
+      builder: (context, _) => _routeVisible && !ads.busy
+          ? AppBanner(key: const ValueKey('title-banner'), ads: ads)
+          : const SizedBox.shrink(),
+    ),
     body: SafeArea(
       child: AnimatedBuilder(
         animation: Listenable.merge([widget.data, ads]),
@@ -788,6 +812,9 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _restart() async {
     if (_restarting) return;
     setState(() => _restarting = true);
+    // Remove the result banner before opening a full-screen advertisement.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     await widget.ads.beforeRestart();
     if (!mounted) return;
     setState(() {
@@ -817,6 +844,9 @@ class _GameScreenState extends State<GameScreen>
       if (!didPop) _confirmExit();
     },
     child: Scaffold(
+      bottomNavigationBar: (game.over || game.won) && !_restarting
+          ? AppBanner(key: const ValueKey('result-banner'), ads: widget.ads)
+          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

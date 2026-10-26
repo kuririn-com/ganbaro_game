@@ -9,6 +9,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ganbaro_game/main.dart';
 import 'package:ganbaro_game/app_data.dart';
 import 'package:ganbaro_game/game_engine.dart';
+import 'package:ganbaro_game/ads.dart';
+
+class BannerLayoutAds extends Ads {
+  @override
+  bool get supported => true;
+  @override
+  bool get canLoadBanner => false;
+}
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +135,136 @@ void main() {
     await tester.pump(const Duration(milliseconds: 510));
     expect(g.y, greaterThan(y));
     await finish(tester);
+  });
+
+  testWidgets('banners appear only on the visible title and finished result', (
+    tester,
+  ) async {
+    await launch(tester, const Size(375, 667));
+    expect(find.byKey(const ValueKey('title-banner')), findsOneWidget);
+    await tester.tap(find.byTooltip('プレイ記録'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('title-banner'), skipOffstage: false),
+      findsNothing,
+    );
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('title-banner')), findsOneWidget);
+    await tester.tap(find.text('通常モード'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('title-banner'), skipOffstage: false),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('result-banner')), findsNothing);
+    await tester.tap(find.byTooltip('一時停止'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('result-banner')), findsNothing);
+    await tester.tap(find.text('つづける'));
+    await tester.pump();
+    final dynamic state = tester.state(find.byType(GameScreen));
+    final GameEngine g = state.game as GameEngine;
+    // Block the next spawn while leaving a gap so no line clear is triggered.
+    for (var row = 0; row < 4; row++) {
+      for (var col = 1; col < GameEngine.width; col++) {
+        g.board[row][col] = const Cell(1);
+      }
+    }
+    g.piece = [
+      [1],
+    ];
+    g.x = 0;
+    g.y = GameEngine.height - 1;
+    g.starX = -1;
+    g.starY = -1;
+    await tester.tap(find.byIcon(Icons.vertical_align_bottom_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('GAME OVER'), findsOneWidget);
+    expect(find.byKey(const ValueKey('result-banner')), findsOneWidget);
+    await tester.tap(find.text('もう一回'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('result-banner')), findsNothing);
+    expect(find.text('GAME OVER'), findsNothing);
+    expect(tester.takeException(), null);
+    await finish(tester);
+  });
+
+  testWidgets('mission clear also displays the result banner', (tester) async {
+    await launch(tester, const Size(390, 844));
+    await tester.tap(find.text('ミッションモード'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1. はじめの10ライン'));
+    await tester.pumpAndSettle();
+    final dynamic state = tester.state(find.byType(GameScreen));
+    final GameEngine g = state.game as GameEngine;
+    g.lines = 9;
+    for (var col = 0; col < GameEngine.width - 1; col++) {
+      g.board[GameEngine.height - 1][col] = const Cell(1);
+    }
+    g.piece = [
+      [1],
+    ];
+    g.x = GameEngine.width - 1;
+    g.y = GameEngine.height - 1;
+    g.starX = -1;
+    g.starY = -1;
+    await tester.tap(find.byIcon(Icons.vertical_align_bottom_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('MISSION CLEAR!'), findsOneWidget);
+    expect(find.byKey(const ValueKey('result-banner')), findsOneWidget);
+    expect(tester.takeException(), null);
+    await finish(tester);
+  });
+
+  testWidgets('result footer stays separate from actions on phone and iPad', (
+    tester,
+  ) async {
+    for (final size in [
+      const Size(375, 667),
+      const Size(568, 320),
+      const Size(834, 1194),
+    ]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      final ads = BannerLayoutAds();
+      final data = await AppData.load();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GameScreen(data: data, ads: ads, mode: GameMode.normal),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final dynamic state = tester.state(find.byType(GameScreen));
+      final GameEngine g = state.game as GameEngine;
+      for (var row = 0; row < 4; row++) {
+        for (var col = 1; col < GameEngine.width; col++) {
+          g.board[row][col] = const Cell(1);
+        }
+      }
+      g.piece = [
+        [1],
+      ];
+      g.x = 0;
+      g.y = GameEngine.height - 1;
+      g.starX = -1;
+      g.starY = -1;
+      await tester.tap(find.byIcon(Icons.vertical_align_bottom_rounded));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('もう一回'));
+      await tester.pumpAndSettle();
+      final banner = tester.getRect(
+        find.byKey(const ValueKey('result-banner')),
+      );
+      final action = tester.getRect(find.widgetWithText(FilledButton, 'もう一回'));
+      expect(banner.height, greaterThanOrEqualTo(122));
+      expect(action.bottom, lessThanOrEqualTo(banner.top));
+      expect(tester.takeException(), null);
+      await finish(tester);
+      ads.dispose();
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    }
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('pausing a line clear resolves it once after resume', (

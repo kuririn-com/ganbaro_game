@@ -8,6 +8,25 @@ class Ads extends ChangeNotifier {
   InterstitialAd? _interstitial;
   bool _disposed = false, _ready = false, busy = false;
   bool get available => _reward != null && !busy;
+  bool get canLoadBanner => supported && _ready && !_disposed;
+
+  // Each platform uses its own banner unit in release builds.
+  // Debug/profile builds always use Google's dedicated test banners.
+  String get bannerAdUnitId {
+    final ios = defaultTargetPlatform == TargetPlatform.iOS;
+    if (!kReleaseMode) {
+      return ios
+          ? 'ca-app-pub-3940256099942544/2435281174'
+          : 'ca-app-pub-3940256099942544/9214589741';
+    }
+    return ios
+        ? const String.fromEnvironment(
+            'ADMOB_IOS_BANNER_AD_UNIT_ID',
+            defaultValue: 'ca-app-pub-9003840415284448/2210040916',
+          )
+        : const String.fromEnvironment('ADMOB_ANDROID_BANNER_AD_UNIT_ID');
+  }
+
   bool get supported =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.iOS ||
@@ -22,6 +41,7 @@ class Ads extends ChangeNotifier {
       await MobileAds.instance.initialize();
       if (_disposed) return;
       _ready = true;
+      notifyListeners();
       _loadReward();
       _loadInterstitial();
     } catch (error) {
